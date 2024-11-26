@@ -10,6 +10,7 @@ function App() {
   const [invalidData, SetInvalidData] = useState([]);
   const [download, setDownload] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [Spinner, Setspinner] = useState(false);
 
   const downloadValidFile = () => {
     if (jsonData.length === 0) {
@@ -50,6 +51,8 @@ function App() {
     const formData = new FormData();
     formData.append("file", file);
 
+    Setspinner(true);
+
     try {
       const response = await axios.post(
         "http://localhost:3000/upload",
@@ -57,11 +60,12 @@ function App() {
       );
 
       const { jsonData, invalidData } = response.data;
-	  setFileName(file.name);
+      setFileName(file.name);
 
       SetjsonData(jsonData);
       SetInvalidData(invalidData);
 
+      Setspinner(false);
       setDownload(!download);
       toast({
         title: "File Processed successful",
@@ -70,6 +74,7 @@ function App() {
         isClosable: true,
       });
     } catch (error) {
+      Setspinner(false);
       toast({
         title: "File Upload Failed",
         position: "top-right",
@@ -139,6 +144,7 @@ function App() {
                               colorScheme="#fcc05e"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                Setspinner(!Spinner);
                                 downloadValidFile();
                               }}
                               size="md"
@@ -158,14 +164,14 @@ function App() {
                               Dowload File
                             </Button>
                             <Button
-								className="flex gap-2"
+                              className="flex gap-2"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 downloadInValidFile();
                               }}
                               fontSize="sm"
                             >
-								<img
+                              <img
                                 className="w-[16px]"
                                 src="/src/assets/invalid.png"
                                 alt="Browse file"
@@ -177,6 +183,7 @@ function App() {
                             onClick={(e) => {
                               e.stopPropagation();
                               setDownload(!download);
+                              Setspinner(false);
                             }}
                             sx={{
                               transition: "all 0.2s ease-in-out",
@@ -193,6 +200,9 @@ function App() {
                         </div>
                       ) : (
                         <Button
+                          isLoading={Spinner}
+                          loadingText="Loading"
+                          spinnerPlacement="start"
                           className="bg-[#fcc05e] flex items-center justify-center gap-2 font-light"
                           as="label"
                           fontSize="sm"

@@ -18,9 +18,7 @@ export class AppController {
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(@UploadedFile() file: Express.Multer.File) {
-
-
-	console.log(file)
+    // console.log(file);
     const mimeType = mime.lookup(file.originalname);
     if (
       mimeType !==
@@ -33,16 +31,17 @@ export class AppController {
 
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
+
     const sheet = workbook.Sheets[sheetName];
     const seenNumber = new Set();
     const invalidData = [];
     const validSecondDigit = ['5', '6', '7', '8'];
 
-
     const jsonData = XLSX.utils
       .sheet_to_json(sheet, { header: 1 })
+	  .slice(1)
       .filter((row) => {
-
+		// console.log(row)
         let phoneNumber = String(row[0])
           .replace(/[^\d]/g, '')
           .replace(/^212/, '0');
@@ -73,10 +72,6 @@ export class AppController {
         return true;
       });
 
-	  console.log( "here " + jsonData[0])
-
-    // console.log(jsonData);
-    // console.log(invalidData);
-    return {jsonData, invalidData};
+    return { jsonData, invalidData };
   }
 }
