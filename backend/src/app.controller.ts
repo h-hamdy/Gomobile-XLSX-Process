@@ -5,6 +5,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  Body,
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -17,8 +18,9 @@ export class AppController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
-    // console.log(file);
+  uploadFile(@UploadedFile() file: Express.Multer.File, @Body() body: any) {
+    const selectedRows = body.selectedRows ? JSON.parse(body.selectedRows) : [];
+    console.log('Selected Rows:', selectedRows);
     const mimeType = mime.lookup(file.originalname);
     if (
       mimeType !==
@@ -37,12 +39,16 @@ export class AppController {
     const invalidData = [];
     const validSecondDigit = ['5', '6', '7', '8'];
 
+    console.log(parseInt(selectedRows.telephone));
+    console.log(parseInt(selectedRows.amount));
+    console.log(parseInt(selectedRows.agent));
+
     const jsonData = XLSX.utils
       .sheet_to_json(sheet, { header: 1 })
-	  .slice(1)
+      .slice(1)
       .filter((row) => {
-		// console.log(row)
-        let phoneNumber = String(row[0])
+
+        let phoneNumber = String(row[selectedRows.telephone - 1])
           .replace(/[^\d]/g, '')
           .replace(/^212/, '0');
 
@@ -55,9 +61,9 @@ export class AppController {
 
         if (isInvalid) {
           invalidData.push({
-            phoneNumber: row[0],
-            id: row[2],
-            balance: row[1],
+            phoneNumber: row[selectedRows.telephone - 1],
+            id: row[selectedRows.agent - 1],
+            balance: row[selectedRows.amount - 1],
             reason: seenNumber.has(phoneNumber)
               ? 'Duplicate'
               : phoneNumber.length !== 10
@@ -67,11 +73,15 @@ export class AppController {
           return false;
         }
         seenNumber.add(phoneNumber);
-        row[0] = phoneNumber;
-        row[1] = Math.floor(row[1]);
+        row[selectedRows.telephone - 1] = phoneNumber;
+        row[selectedRows.amount - 1] = Math.floor(
+        row[selectedRows.amount - 1],
+        );
         return true;
       });
 
+	  console.log(selectedRows)
+	  console.log(jsonData)
     return { jsonData, invalidData };
   }
 }

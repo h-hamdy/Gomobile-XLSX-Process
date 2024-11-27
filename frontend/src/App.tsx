@@ -1,8 +1,9 @@
-import { Box, Button, useToast, Text } from "@chakra-ui/react";
+import { Box, Button, useToast, Text, useDisclosure } from "@chakra-ui/react";
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Dropzone from "react-dropzone";
 import * as XLSX from "xlsx";
+import { ModalSelection } from "./components/ModalSelection";
 
 function App() {
   const toast = useToast();
@@ -11,6 +12,64 @@ function App() {
   const [download, setDownload] = useState(false);
   const [fileName, setFileName] = useState("");
   const [Spinner, Setspinner] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+
+  const initialSelectedRows = {
+    telephone: 1, // Default index for telephone column
+    amount: 2, // Default index for amount column
+    agent: 3, // Default index for agent column
+  };
+
+  const [selectedRows, setSelectedRows] = useState(initialSelectedRows);
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const handleUpload = async () => {
+    if (!fileToUpload) return;
+
+    console.log("heeeree");
+
+    const formData = new FormData();
+    formData.append("file", fileToUpload);
+    formData.append("selectedRows", JSON.stringify(selectedRows));
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/upload",
+        formData
+      );
+      const { jsonData, invalidData } = response.data;
+
+      // Update the state with the response data
+      SetjsonData(jsonData);
+      SetInvalidData(invalidData);
+
+      Setspinner(false);
+      setDownload(!download);
+
+      toast({
+        title: "File Processed successfully",
+        position: "top-right",
+        status: "success",
+        isClosable: true,
+      });
+    } catch (error) {
+      Setspinner(false);
+      toast({
+        title: "File Upload Failed",
+        position: "top-right",
+        description: "Please upload a valid file XLSX.",
+        status: "error",
+        isClosable: true,
+      });
+    }
+  };
+
+  useEffect(() => {
+    console.log("Updated selectedRows:", selectedRows);
+  }, [selectedRows]);
 
   const downloadValidFile = () => {
     if (jsonData.length === 0) {
@@ -47,42 +106,9 @@ function App() {
 
   const handleFileChange = async (file: File) => {
     if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    Setspinner(true);
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3000/upload",
-        formData
-      );
-
-      const { jsonData, invalidData } = response.data;
-      setFileName(file.name);
-
-      SetjsonData(jsonData);
-      SetInvalidData(invalidData);
-
-      Setspinner(false);
-      setDownload(!download);
-      toast({
-        title: "File Processed successful",
-        position: "top-right",
-        status: "success",
-        isClosable: true,
-      });
-    } catch (error) {
-      Setspinner(false);
-      toast({
-        title: "File Upload Failed",
-        position: "top-right",
-        description: "Please upload a valid file XLSX.",
-        status: "error",
-        isClosable: true,
-      });
-    }
+    onOpen();
+    setFileToUpload(file);
+    setFileName(file.name);
   };
 
   return (
@@ -184,6 +210,7 @@ function App() {
                               e.stopPropagation();
                               setDownload(!download);
                               Setspinner(false);
+                              setSelectedRows(initialSelectedRows);
                             }}
                             sx={{
                               transition: "all 0.2s ease-in-out",
@@ -232,6 +259,16 @@ function App() {
           </Dropzone>
         </Box>
       </Box>
+      {isOpen ? (
+        <ModalSelection
+          setIsProcessing={setIsProcessing}
+          onClose={onClose}
+          isOpen={isOpen}
+          selectedRows={selectedRows}
+          setSelectedRows={setSelectedRows}
+          handleUpload={handleUpload}
+        />
+      ) : null}
     </>
   );
 }
