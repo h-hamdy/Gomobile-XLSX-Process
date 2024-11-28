@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-	"dev-exposed": "vite --host",
+    "dev-exposed": "vite --host",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -21,6 +21,7 @@
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.5",
     "react-icons": "^5.3.0",
+    "react-router-dom": "^7.0.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

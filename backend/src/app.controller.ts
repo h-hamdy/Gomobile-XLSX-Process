@@ -39,15 +39,11 @@ export class AppController {
     const invalidData = [];
     const validSecondDigit = ['5', '6', '7', '8'];
 
-    console.log(parseInt(selectedRows.telephone));
-    console.log(parseInt(selectedRows.amount));
-    console.log(parseInt(selectedRows.agent));
-
     const jsonData = XLSX.utils
       .sheet_to_json(sheet, { header: 1 })
-      .slice(1)
-      .filter((row) => {
+      .filter((row, index) => {
 
+		if (index === 0) return true;
         let phoneNumber = String(row[selectedRows.telephone - 1])
           .replace(/[^\d]/g, '')
           .replace(/^212/, '0');
@@ -80,8 +76,6 @@ export class AppController {
         return true;
       });
 
-	  console.log(selectedRows)
-	  console.log(jsonData)
     return { jsonData, invalidData };
   }
 }

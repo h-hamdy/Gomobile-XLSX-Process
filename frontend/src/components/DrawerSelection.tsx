@@ -18,19 +18,20 @@ import {
   Tr,
   Th,
   Td,
-  TableCaption,
   TableContainer,
 } from "@chakra-ui/react";
 
-export const ModalSelection = ({
+export const DrawerSelection = ({
   onClose,
   isOpen,
   selectedRows,
   setSelectedRows,
-  setIsProcessing,
   handleUpload,
+  chunckData,
 }: any) => {
   console.log(selectedRows);
+
+  console.log(chunckData);
   return (
     <Drawer onClose={onClose} isOpen={isOpen} size={"xl"}>
       <DrawerOverlay />
@@ -40,47 +41,36 @@ export const ModalSelection = ({
         <DrawerBody className="flex flex-col gap-5">
           <TableContainer>
             <Table variant="simple">
-              <TableCaption>
-                Snipped From the file you just uploaded
-              </TableCaption>
               <Thead>
                 <Tr>
-                  <Th>To convert</Th>
-                  <Th>into</Th>
-                  <Th isNumeric>multiply by</Th>
+                  {chunckData[0]?.map((header: any, index: any) => (
+                    <Th key={index} isNumeric={index === 2}>
+                      {header}
+                    </Th>
+                  ))}
                 </Tr>
               </Thead>
               <Tbody>
-                <Tr>
-                  <Td>inches</Td>
-                  <Td>millimetres (mm)</Td>
-                  <Td isNumeric>25.4</Td>
-                </Tr>
-                <Tr>
-                  <Td>feet</Td>
-                  <Td>centimetres (cm)</Td>
-                  <Td isNumeric>30.48</Td>
-                </Tr>
-                <Tr>
-                  <Td>yards</Td>
-                  <Td>metres (m)</Td>
-                  <Td isNumeric>0.91444</Td>
-                </Tr>
-                <Tr>
-                  <Td>yards</Td>
-                  <Td>metres (m)</Td>
-                  <Td isNumeric>0.91444</Td>
-                </Tr>
+                {chunckData?.slice(1).map((row : any, rowIndex : any) => (
+                  <Tr key={rowIndex}>
+                    {row.map((cell : any, cellIndex: any) => (
+                      <Td className="text-xs" key={cellIndex} isNumeric={cellIndex === 2}>
+                        {cell}
+                      </Td>
+                    ))}
+                  </Tr>
+                ))}
               </Tbody>
             </Table>
           </TableContainer>
+		  <Text className="flex items-center justify-center text-xs text-gray-500">Snipped From the file you just uploaded</Text>
           <Box className="flex flex-col gap-8 pt-10">
             <RadioGroup
-              value={selectedRows.telephone.toString()} // Controlled value
+              value={selectedRows.telephone.toString()}
               onChange={(value) =>
                 setSelectedRows({
                   ...selectedRows,
-                  telephone: parseInt(value), // Convert the value back to a number
+                  telephone: parseInt(value),
                 })
               }
             >
@@ -105,11 +95,11 @@ export const ModalSelection = ({
             </RadioGroup>
 
             <RadioGroup
-              value={selectedRows.amount.toString()} // Controlled value
+              value={selectedRows.amount.toString()}
               onChange={(value) =>
                 setSelectedRows({
                   ...selectedRows,
-                  amount: parseInt(value), // Convert the value back to a number
+                  amount: parseInt(value),
                 })
               }
             >
@@ -134,7 +124,7 @@ export const ModalSelection = ({
             </RadioGroup>
 
             <RadioGroup
-              value={selectedRows.agent.toString()} // Controlled value
+              value={selectedRows.agent.toString()}
               onChange={(value) =>
                 setSelectedRows({
                   ...selectedRows,
@@ -166,7 +156,7 @@ export const ModalSelection = ({
         <DrawerFooter className="flex gap-4">
           <Button
             onClick={() => {
-              setIsProcessing(false), onClose();
+              onClose();
             }}
           >
             Close
@@ -191,43 +181,3 @@ export const ModalSelection = ({
     </Drawer>
   );
 };
-
-// const formData = new FormData();
-//     formData.append("file", file);
-
-//     formData.append("selectedRows", JSON.stringify(selectedRows));
-
-//     Setspinner(true);
-
-//     try {
-//       const response = await axios.post(
-//         "http://localhost:3000/upload",
-//         formData
-//       );
-
-//       const { jsonData, invalidData } = response.data;
-//       setFileName(file.name);
-
-//       SetjsonData(jsonData);
-//       SetInvalidData(invalidData);
-
-//       Setspinner(false);
-//       setDownload(!download);
-//       toast({
-//         title: "File Processed successful",
-//         position: "top-right",
-//         status: "success",
-//         isClosable: true,
-//       });
-//       setIsProcessing(false);
-//     } catch (error) {
-//       Setspinner(false);
-//       toast({
-//         title: "File Upload Failed",
-//         position: "top-right",
-//         description: "Please upload a valid file XLSX.",
-//         status: "error",
-//         isClosable: true,
-//       });
-//       setIsProcessing(false);
-//     }
