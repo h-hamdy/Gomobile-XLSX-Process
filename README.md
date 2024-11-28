@@ -2,6 +2,7 @@
 <img src="./frontend/src/assets/logo.png" alt="Project Screenshot" title="Project UI Screenshot" width="600">
 </div>
 
+<small>
 
 # File Upload and Display Project
 
@@ -33,10 +34,9 @@ This project is a web-based tool that allows users to upload Excel files, proces
 
 ---
 
+## Project Structure
 
-# Project Structure
-
-## Frontend
+### Frontend
 The frontend structure is organized as follows:
 - **`components/`**: Contains reusable React components used throughout the application.
 - **`contexts/`**: Manages global state using React's `useContext` hook.
@@ -44,9 +44,11 @@ The frontend structure is organized as follows:
 
 ---
 
-## Backend
+### Backend
 The backend structure is organized as follows:
 - **`controllers/`**: Contains the API endpoints and request handling logic.
 - **`services/`**: Implements business logic and database interaction.
 - **`entities/`**: Defines database models for interacting with the SQL database.
 - **`main.ts`**: The entry point that bootstraps the backend application.
+
+</small>
