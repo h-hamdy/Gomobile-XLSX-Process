@@ -19,19 +19,61 @@ import {
   Th,
   Td,
   TableContainer,
+  useToast,
 } from "@chakra-ui/react";
+import { useContext } from "react";
+import { UploadContext } from "../App";
+import axios from "axios";
 
-export const DrawerSelection = ({
-  onClose,
-  isOpen,
-  selectedRows,
-  setSelectedRows,
-  handleUpload,
-  chunckData,
-}: any) => {
-  console.log(selectedRows);
+export const DrawerSelection = ({ onClose, isOpen, setDownload }: any) => {
+  const context = useContext(UploadContext);
+  if (!context) {
+    console.error("UploadContext is not available");
+    return null;
+  }
 
-  console.log(chunckData);
+  const { data, setData } = context;
+  const toast = useToast();
+
+  const handleUpload = async () => {
+    if (!data.OriginalFile) return;
+
+    const formData = new FormData();
+    formData.append("file", data.OriginalFile);
+    formData.append("selectedRows", JSON.stringify(data.SelectedRows));
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/upload",
+        formData
+      );
+      const { jsonData, invalidData } = response.data;
+
+      setData((prevData: any) => ({
+        ...prevData,
+        ValidFile: jsonData,
+        InvalidFile: invalidData,
+      }));
+
+      setDownload(true);
+
+      toast({
+        title: "File Processed successfully",
+        position: "top-right",
+        status: "success",
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "File Upload Failed",
+        position: "top-right",
+        description: "Please upload a valid file XLSX.",
+        status: "error",
+        isClosable: true,
+      });
+    }
+  };
+
   return (
     <Drawer onClose={onClose} isOpen={isOpen} size={"xl"}>
       <DrawerOverlay />
@@ -43,7 +85,7 @@ export const DrawerSelection = ({
             <Table variant="simple">
               <Thead>
                 <Tr>
-                  {chunckData[0]?.map((header: any, index: any) => (
+                  {data?.ChunkedFile[0]?.map((header: any, index: any) => (
                     <Th key={index} isNumeric={index === 2}>
                       {header}
                     </Th>
@@ -51,10 +93,14 @@ export const DrawerSelection = ({
                 </Tr>
               </Thead>
               <Tbody>
-                {chunckData?.slice(1).map((row : any, rowIndex : any) => (
+                {data.ChunkedFile?.slice(1).map((row: any, rowIndex: any) => (
                   <Tr key={rowIndex}>
-                    {row.map((cell : any, cellIndex: any) => (
-                      <Td className="text-xs" key={cellIndex} isNumeric={cellIndex === 2}>
+                    {row.map((cell: any, cellIndex: any) => (
+                      <Td
+                        className="text-xs"
+                        key={cellIndex}
+                        isNumeric={cellIndex === 2}
+                      >
                         {cell}
                       </Td>
                     ))}
@@ -63,15 +109,20 @@ export const DrawerSelection = ({
               </Tbody>
             </Table>
           </TableContainer>
-		  <Text className="flex items-center justify-center text-xs text-gray-500">Snipped From the file you just uploaded</Text>
+          <Text className="flex items-center justify-center text-xs text-gray-500">
+            Snipped From the file you just uploaded
+          </Text>
           <Box className="flex flex-col gap-8 pt-10">
             <RadioGroup
-              value={selectedRows.telephone.toString()}
+              value={data.SelectedRows.telephone.toString()}
               onChange={(value) =>
-                setSelectedRows({
-                  ...selectedRows,
-                  telephone: parseInt(value),
-                })
+                setData((prevData: any) => ({
+                  ...prevData,
+                  SelectedRows: {
+                    ...prevData.SelectedRows,
+                    telephone: parseInt(value),
+                  },
+                }))
               }
             >
               <Stack direction="column">
@@ -95,12 +146,15 @@ export const DrawerSelection = ({
             </RadioGroup>
 
             <RadioGroup
-              value={selectedRows.amount.toString()}
+              value={data.SelectedRows.amount.toString()}
               onChange={(value) =>
-                setSelectedRows({
-                  ...selectedRows,
-                  amount: parseInt(value),
-                })
+                setData((prevData: any) => ({
+                  ...prevData,
+                  SelectedRows: {
+                    ...prevData.SelectedRows,
+                    amount: parseInt(value),
+                  },
+                }))
               }
             >
               <Stack direction="column">
@@ -124,12 +178,15 @@ export const DrawerSelection = ({
             </RadioGroup>
 
             <RadioGroup
-              value={selectedRows.agent.toString()}
+              value={data.SelectedRows.agent.toString()}
               onChange={(value) =>
-                setSelectedRows({
-                  ...selectedRows,
-                  agent: parseInt(value),
-                })
+                setData((prevData: any) => ({
+                  ...prevData,
+                  SelectedRows: {
+                    ...prevData.SelectedRows,
+                    agent: parseInt(value),
+                  },
+                }))
               }
             >
               <Stack direction="column">

@@ -1,76 +1,39 @@
 import { Box, Button, useToast, Text, useDisclosure } from "@chakra-ui/react";
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Dropzone from "react-dropzone";
 import * as XLSX from "xlsx";
 import { DrawerSelection } from "./DrawerSelection";
 import { Link } from "react-router-dom";
+import { UploadContext } from "../App";
 
 export const Upload = () => {
   const toast = useToast();
-  const [jsonData, SetjsonData] = useState([]);
-  const [invalidData, SetInvalidData] = useState([]);
   const [download, setDownload] = useState(false);
   const [fileName, setFileName] = useState("");
   const [Spinner, Setspinner] = useState(false);
-  const [chunckData, SetchunckData] = useState<any>([]);
 
-  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const context = useContext(UploadContext);
 
+  if (!context) {
+    console.error("UploadContext is not available");
+    return null;
+  }
+
+  const { data, setData } = context;
   const initialSelectedRows = {
     telephone: 1,
     amount: 2,
     agent: 3,
   };
 
-  const [selectedRows, setSelectedRows] = useState(initialSelectedRows);
-
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const handleUpload = async () => {
-    if (!fileToUpload) return;
-
-    const formData = new FormData();
-    formData.append("file", fileToUpload);
-    formData.append("selectedRows", JSON.stringify(selectedRows));
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3000/upload",
-        formData
-      );
-      const { jsonData, invalidData } = response.data;
-
-      SetjsonData(jsonData);
-      SetInvalidData(invalidData);
-
-      Setspinner(false);
-      setDownload(!download);
-
-      toast({
-        title: "File Processed successfully",
-        position: "top-right",
-        status: "success",
-        isClosable: true,
-      });
-    } catch (error) {
-      Setspinner(false);
-      toast({
-        title: "File Upload Failed",
-        position: "top-right",
-        description: "Please upload a valid file XLSX.",
-        status: "error",
-        isClosable: true,
-      });
-    }
-  };
-
   useEffect(() => {
-    console.log("Updated selectedRows:", selectedRows);
-  }, [selectedRows]);
+    console.log("Updated selectedRows:", data.SelectedRows);
+  }, [data.SelectedRows]);
 
   const downloadValidFile = () => {
-    if (jsonData.length === 0) {
+    if (data.ValidFile.length === 0) {
       toast({
         title: "No data to download",
         position: "top-right",
@@ -80,7 +43,7 @@ export const Upload = () => {
       return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(jsonData);
+    const worksheet = XLSX.utils.json_to_sheet(data.ValidFile);
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
@@ -88,7 +51,7 @@ export const Upload = () => {
   };
 
   const downloadInValidFile = () => {
-    if (invalidData.length === 0) {
+    if (data.InvalidFile.length === 0) {
       toast({
         title: "No data to download",
         position: "top-right",
@@ -98,7 +61,7 @@ export const Upload = () => {
       return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(invalidData);
+    const worksheet = XLSX.utils.json_to_sheet(data.InvalidFile);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
     XLSX.writeFile(workbook, "InValidData-" + fileName);
@@ -107,11 +70,35 @@ export const Upload = () => {
   const handleFileChange = async (file: File) => {
     if (!file) return;
 
-    onOpen();
-    setFileToUpload(file);
-    setFileName(file.name);
+    const mimeType = file.type;
+    if (
+      mimeType !==
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ) {
+      toast({
+        title: "File Upload Failed",
+        position: "top-right",
+        description: "Please upload a valid file XLSX.",
+        status: "error",
+        isClosable: true,
+      });
+      return;
+    }
 
-    SetchunckData([]);
+    onOpen();
+    setData((prevData: any) => ({
+      ...prevData,
+      OriginalFile: file,
+    }));
+
+    if (!data) return;
+
+    setData((prevData: any) => ({
+      ...prevData,
+      OriginalFile: file,
+    }));
+
+    setFileName(file.name);
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -120,11 +107,19 @@ export const Upload = () => {
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
 
-      XLSX.utils.sheet_to_json(sheet, { header: 1 }).filter((row, index) => {
-        if (index >= 6) return;
-        SetchunckData((prevData: any) => [...prevData, row]);
+      const chunkedData: any[] = [];
+      XLSX.utils.sheet_to_json(sheet, { header: 1 }).forEach((row, index) => {
+        if (index < 5) {
+          chunkedData.push(row);
+        }
       });
+
+      setData((prevData: any) => ({
+        ...prevData,
+        ChunkedFile: chunkedData,
+      }));
     };
+
     reader.readAsArrayBuffer(file);
   };
 
@@ -227,7 +222,10 @@ export const Upload = () => {
                               e.stopPropagation();
                               setDownload(!download);
                               Setspinner(false);
-                              setSelectedRows(initialSelectedRows);
+                              setData((prevData: any) => ({
+                                ...prevData,
+                                SelectedRows: initialSelectedRows,
+                              }));
                             }}
                             sx={{
                               transition: "all 0.2s ease-in-out",
@@ -274,7 +272,7 @@ export const Upload = () => {
               </section>
             )}
           </Dropzone>
-			<Link className="flex w-full px-10" to="/history">
+          <Link className="flex w-full px-10" to="/history">
             <Button
               fontSize={"sm"}
               textColor={"gray-600"}
@@ -282,17 +280,14 @@ export const Upload = () => {
             >
               History
             </Button>
-			</Link>
+          </Link>
         </Box>
       </Box>
       {isOpen ? (
         <DrawerSelection
           onClose={onClose}
           isOpen={isOpen}
-          selectedRows={selectedRows}
-          setSelectedRows={setSelectedRows}
-          handleUpload={handleUpload}
-          chunckData={chunckData}
+          setDownload={setDownload}
         />
       ) : null}
     </>
