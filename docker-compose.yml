@@ -11,6 +11,8 @@ services:
       - ./frontend:/frontend
     depends_on:
       - backend
+
+      
   backend:
     build: './backend'
     container_name: Gomobile_backend

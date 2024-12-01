@@ -85,7 +85,6 @@ export const Upload = () => {
       return;
     }
 
-    onOpen();
     setData((prevData: any) => ({
       ...prevData,
       OriginalFile: file,
@@ -109,7 +108,7 @@ export const Upload = () => {
 
       const chunkedData: any[] = [];
       XLSX.utils.sheet_to_json(sheet, { header: 1 }).forEach((row, index) => {
-        if (index < 5) {
+        if (index < 6) {
           chunkedData.push(row);
         }
       });
@@ -118,6 +117,7 @@ export const Upload = () => {
         ...prevData,
         ChunkedFile: chunkedData,
       }));
+      onOpen();
     };
 
     reader.readAsArrayBuffer(file);
@@ -274,6 +274,7 @@ export const Upload = () => {
           </Dropzone>
           <Link className="flex w-full px-10" to="/history">
             <Button
+			border="1px" borderColor="#fcc05e"
               fontSize={"sm"}
               textColor={"gray-600"}
               className="flex text-gray-600 w-full"
