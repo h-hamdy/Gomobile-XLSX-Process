@@ -33,7 +33,8 @@ export const Upload = () => {
   }, [data.SelectedRows]);
 
   const downloadValidFile = () => {
-    if (data.ValidFile.length === 0) {
+	console.log(data.ValidFile)
+    if (data.ValidFile === undefined || data.ValidFile.length === 0) {
       toast({
         title: "No data to download",
         position: "top-right",
@@ -51,7 +52,7 @@ export const Upload = () => {
   };
 
   const downloadInValidFile = () => {
-    if (data.InvalidFile.length === 0) {
+    if (data.ValidFile === undefined || data.InvalidFile.length === 0) {
       toast({
         title: "No data to download",
         position: "top-right",

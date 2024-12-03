@@ -15,7 +15,9 @@ import { UploadContext } from "../App";
 import axios from "axios";
 import { RadioComponent } from "./RadioComponent";
 import { TableData } from "./TableData";
+import { useNavigate } from "react-router-dom";
 export const DrawerSelection = ({ onClose, isOpen, setDownload }: any) => {
+  const navigate = useNavigate();
   const context = useContext(UploadContext);
   if (!context) {
     console.error("UploadContext is not available");
@@ -46,6 +48,7 @@ export const DrawerSelection = ({ onClose, isOpen, setDownload }: any) => {
       }));
 
       setDownload(true);
+	  navigate("/history");
 
       toast({
         title: "File Processed successfully",
