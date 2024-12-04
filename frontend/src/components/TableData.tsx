@@ -19,7 +19,7 @@ export const TableData = () => {
 
   const { data } = context;
   return (
-    <TableContainer>
+    <TableContainer className="rounded-sm">
       <Table variant="simple">
         <Thead>
           <Tr>

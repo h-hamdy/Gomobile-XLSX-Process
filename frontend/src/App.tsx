@@ -12,19 +12,13 @@ interface Data {
   InvalidFile: any[];
   ValidFile: any[];
   ChunkedFile: any[];
-  SelectedRows: { [key: string]: number };
+  selectedOptions: { [key: string]: number };
 }
 
 interface UploadContextData {
   data: Data;
   setData: Dispatch<SetStateAction<Data>>;
 }
-
-const initialSelectedRows = {
-  telephone: 1,
-  amount: 2,
-  agent: 3,
-};
 
 export const UploadContext = createContext<UploadContextData | undefined>(
   undefined
@@ -36,15 +30,15 @@ function App() {
     InvalidFile: [],
     ValidFile: [],
     ChunkedFile: [],
-    SelectedRows: initialSelectedRows,
+    selectedOptions: {},
   });
 
   return (
     <UploadContext.Provider value={{ data, setData }}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Upload />} />
-          <Route path="/history" element={<History />} />
+          <Route path="/upload" element={<Upload />} />
+          <Route path="/" element={<History />} />
         </Routes>
       </BrowserRouter>
     </UploadContext.Provider>

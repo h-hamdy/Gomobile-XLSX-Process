@@ -9,14 +9,15 @@ import {
   DrawerCloseButton,
   useToast,
   Text,
+  Select,
+  Box,
 } from "@chakra-ui/react";
 import { useContext } from "react";
 import { UploadContext } from "../App";
 import axios from "axios";
-import { RadioComponent } from "./RadioComponent";
 import { TableData } from "./TableData";
 import { useNavigate } from "react-router-dom";
-export const DrawerSelection = ({ onClose, isOpen, setDownload }: any) => {
+export const DrawerSelection = ({ onClose, isOpen }: any) => {
   const navigate = useNavigate();
   const context = useContext(UploadContext);
   if (!context) {
@@ -25,30 +26,42 @@ export const DrawerSelection = ({ onClose, isOpen, setDownload }: any) => {
   }
 
   const { data, setData } = context;
+
   const toast = useToast();
+
+  const handleChange = (item: any, value: any) => {
+    setData((prevData: any) => ({
+      ...prevData,
+      selectedOptions: {
+        ...prevData.selectedOptions,
+        [item]: value,
+      },
+    }));
+  };
+
 
   const handleUpload = async () => {
     if (!data.OriginalFile) return;
 
     const formData = new FormData();
     formData.append("file", data.OriginalFile);
-    formData.append("selectedRows", JSON.stringify(data.SelectedRows));
+    formData.append("selectedOptions", JSON.stringify(data.selectedOptions));
+
+    console.log(data.selectedOptions);
 
     try {
-      const response = await axios.post(
-        "http://localhost:3000/upload",
-        formData
-      );
-      const { jsonData, invalidData } = response.data;
+      await axios.post("http://localhost:5000/process_excel", formData);
 
-      setData((prevData: any) => ({
-        ...prevData,
-        ValidFile: jsonData,
-        InvalidFile: invalidData,
-      }));
+	  const resetData ={
+		OriginalFile: null,
+		InvalidFile: [],
+		ValidFile: [],
+		ChunkedFile: [],
+		selectedOptions: {},
+	  }
 
-      setDownload(true);
-	  navigate("/history");
+	  setData(resetData);
+      navigate("/");
 
       toast({
         title: "File Processed successfully",
@@ -56,16 +69,18 @@ export const DrawerSelection = ({ onClose, isOpen, setDownload }: any) => {
         status: "success",
         isClosable: true,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "File Upload Failed",
         position: "top-right",
-        description: "Please upload a valid file XLSX.",
+        description: error.message,
         status: "error",
         isClosable: true,
       });
     }
   };
+
+  const options = ["telephone", "montant", "agent", "other"];
 
   return (
     <Drawer onClose={onClose} isOpen={isOpen} size={"xl"}>
@@ -73,13 +88,41 @@ export const DrawerSelection = ({ onClose, isOpen, setDownload }: any) => {
       <DrawerContent>
         <DrawerHeader>Select Your Columns File Format</DrawerHeader>
         <DrawerCloseButton />
-		
+
         <DrawerBody className="flex flex-col gap-5">
           <TableData/>
           <Text className="flex items-center justify-center text-xs text-gray-500">
             Snipped From the file you just uploaded
           </Text>
-          <RadioComponent/>
+          <Box className="flex flex-wrap shrink-0 w-full gap-5  pt-10">
+            {data.ChunkedFile[0].map((item: any, index: number) => (
+              <>
+                <Box className="flex flex-col gap-1">
+                  <Text className="font-bold text-gray-600 text-xs">
+                    {item}
+                  </Text>
+                  <Select
+                    onChange={(e) => handleChange(item, e.target.value)}
+                    borderRadius={"8px"}
+					fontSize={'sm'}
+                    size={"sm"}
+                    className="text-sm"
+                    key={index}
+					minWidth={'150px'}
+                  >
+                    {options.map((nestedItem: string, index: number) => (
+						<option
+	                    key={index}
+                        className="text-sm p-5 rounded-md"
+						>
+                        {nestedItem}
+                      </option>
+                    )) }
+                  </Select>
+                </Box>
+              </>
+            ))}
+          </Box>
         </DrawerBody>
 
         <DrawerFooter className="flex gap-4">

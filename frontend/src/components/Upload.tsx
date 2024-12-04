@@ -1,5 +1,5 @@
 import { Box, Button, useToast, Text, useDisclosure } from "@chakra-ui/react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import Dropzone from "react-dropzone";
 import * as XLSX from "xlsx";
 import { DrawerSelection } from "./DrawerSelection";
@@ -8,9 +8,6 @@ import { UploadContext } from "../App";
 
 export const Upload = () => {
   const toast = useToast();
-  const [download, setDownload] = useState(false);
-  const [fileName, setFileName] = useState("");
-  const [Spinner, Setspinner] = useState(false);
 
   const context = useContext(UploadContext);
 
@@ -20,53 +17,17 @@ export const Upload = () => {
   }
 
   const { data, setData } = context;
-  const initialSelectedRows = {
-    telephone: 1,
-    amount: 2,
-    agent: 3,
-  };
+  //   const initialselectedOptions = {
+  //     telephone: 1,
+  //     amount: 2,
+  //     agent: 3,
+  //   };
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   useEffect(() => {
-    console.log("Updated selectedRows:", data.SelectedRows);
-  }, [data.SelectedRows]);
-
-  const downloadValidFile = () => {
-	console.log(data.ValidFile)
-    if (data.ValidFile === undefined || data.ValidFile.length === 0) {
-      toast({
-        title: "No data to download",
-        position: "top-right",
-        status: "warning",
-        isClosable: true,
-      });
-      return;
-    }
-
-    const worksheet = XLSX.utils.json_to_sheet(data.ValidFile);
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-    XLSX.writeFile(workbook, "ValidData-" + fileName);
-  };
-
-  const downloadInValidFile = () => {
-    if (data.ValidFile === undefined || data.InvalidFile.length === 0) {
-      toast({
-        title: "No data to download",
-        position: "top-right",
-        status: "warning",
-        isClosable: true,
-      });
-      return;
-    }
-
-    const worksheet = XLSX.utils.json_to_sheet(data.InvalidFile);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-    XLSX.writeFile(workbook, "InValidData-" + fileName);
-  };
+    console.log("Updated selectedOptions:", data.selectedOptions);
+  }, [data.selectedOptions]);
 
   const handleFileChange = async (file: File) => {
     if (!file) return;
@@ -98,8 +59,6 @@ export const Upload = () => {
       OriginalFile: file,
     }));
 
-    setFileName(file.name);
-
     const reader = new FileReader();
     reader.onload = (e) => {
       const buffer = e.target?.result;
@@ -108,6 +67,7 @@ export const Upload = () => {
       const sheet = workbook.Sheets[sheetName];
 
       const chunkedData: any[] = [];
+
       XLSX.utils.sheet_to_json(sheet, { header: 1 }).forEach((row, index) => {
         if (index < 6) {
           chunkedData.push(row);
@@ -118,6 +78,7 @@ export const Upload = () => {
         ...prevData,
         ChunkedFile: chunkedData,
       }));
+      console.log(chunkedData);
       onOpen();
     };
 
@@ -173,109 +134,42 @@ export const Upload = () => {
                         Drag and Drop here
                       </Text>
                       <Text className="text-gray-400 text-xs">- Or -</Text>
-                      {download ? (
-                        <div className="flex flex-col gap-4">
-                          <Box className="flex gap-2">
-                            <Button
-                              className="bg-[#fcc05e] flex items-center justify-center gap-2 font-light"
-                              as="label"
-                              fontSize="sm"
-                              colorScheme="#fcc05e"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                Setspinner(!Spinner);
-                                downloadValidFile();
-                              }}
-                              size="md"
-                              sx={{
-                                transition: "all 0.2s ease-in-out",
-                                _hover: {
-                                  backgroundColor: "#ffd070",
-                                  transform: "scale(1.05)",
-                                },
-                              }}
-                            >
-                              <img
-                                className="w-[16px]"
-                                src="/src/assets/upload.png"
-                                alt="Browse file"
-                              />
-                              Dowload File
-                            </Button>
-                            <Button
-                              className="flex gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                downloadInValidFile();
-                              }}
-                              fontSize="sm"
-                            >
-                              <img
-                                className="w-[16px]"
-                                src="/src/assets/invalid.png"
-                                alt="Browse file"
-                              />
-                              Invalid Data
-                            </Button>
-                          </Box>
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDownload(!download);
-                              Setspinner(false);
-                              setData((prevData: any) => ({
-                                ...prevData,
-                                SelectedRows: initialSelectedRows,
-                              }));
-                            }}
-                            sx={{
-                              transition: "all 0.2s ease-in-out",
-                              _hover: {
-                                transform: "scale(1.05)",
-                              },
-                            }}
-                            fontSize="sm"
-                            border="1px"
-                            borderColor="#fcc05e"
-                          >
-                            Upload More
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          isLoading={Spinner}
-                          loadingText="Loading"
-                          spinnerPlacement="start"
-                          className="bg-[#fcc05e] flex items-center justify-center gap-2 font-light"
-                          as="label"
-                          fontSize="sm"
-                          colorScheme="#fcc05e"
-                          size="md"
-                          sx={{
-                            transition: "all 0.2s ease-in-out",
-                            _hover: {
-                              backgroundColor: "#ffd070",
-                              transform: "scale(1.05)",
-                            },
-                          }}
-                        >
-                          <img
-                            className="w-[16px]"
-                            src="/src/assets/upload.png"
-                            alt="Browse file"
-                          />
-                          Browse File
-                        </Button>
-                      )}
+                      <Button
+                        onClick={() =>
+                          setData((prevData: any) => ({
+                            ...prevData,
+                          }))
+                        }
+                        className="bg-[#fcc05e] flex items-center justify-center gap-2 font-light"
+                        as="label"
+                        fontSize="sm"
+                        colorScheme="#fcc05e"
+                        size="md"
+                        sx={{
+                          transition: "all 0.2s ease-in-out",
+                          _hover: {
+                            backgroundColor: "#ffd070",
+                            transform: "scale(1.05)",
+                          },
+                        }}
+                      >
+                        <img
+                          className="w-[16px]"
+                          src="/src/assets/upload.png"
+                          alt="Browse file"
+                        />
+                        Browse File
+                      </Button>
                     </Box>
                   </Button>
                 </div>
               </section>
             )}
           </Dropzone>
-          <Link className="flex w-full px-10" to="/history">
+          <Link className="flex w-full px-10" to="/">
             <Button
-			border="1px" borderColor="#fcc05e"
+              border="1px"
+              borderColor="#fcc05e"
               fontSize={"sm"}
               textColor={"gray-600"}
               className="flex text-gray-600 w-full"
@@ -285,13 +179,7 @@ export const Upload = () => {
           </Link>
         </Box>
       </Box>
-      {isOpen ? (
-        <DrawerSelection
-          onClose={onClose}
-          isOpen={isOpen}
-          setDownload={setDownload}
-        />
-      ) : null}
+      {isOpen ? <DrawerSelection onClose={onClose} isOpen={isOpen} /> : null}
     </>
   );
 };

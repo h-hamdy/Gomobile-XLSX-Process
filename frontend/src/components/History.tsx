@@ -15,7 +15,7 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftIcon, SearchIcon, DownloadIcon } from "@chakra-ui/icons";
+import { ArrowLeftIcon, SearchIcon, DownloadIcon , AddIcon} from "@chakra-ui/icons";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -25,9 +25,11 @@ export const History = () => {
 
   const historyList = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/history");
-      console.log(response);
+      const response = await axios.get(
+        "http://127.0.0.1:5000/get_all_file_excel"
+      );
       setHistoryData(response.data);
+	  console.log(response.data)
     } catch {
       toast({
         title: "No data to download",
@@ -40,7 +42,48 @@ export const History = () => {
 
   useEffect(() => {
     historyList();
-  }, []);
+	}, []);
+	
+
+  const downloadFile = async (id: number, fileName: string, type: string) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/download_file?id=${id}&type=${type}`,
+        {
+          responseType: "blob",
+        }
+      );
+
+      const blob = res.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      if (!File || File.length === 0) {
+        toast({
+          title: "Error downloading file",
+          description: "Please Check Your Original File",
+          position: "top-right",
+          status: "warning",
+          isClosable: true,
+        });
+        return;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error downloading Original file",
+        description: error.message,
+        position: "top-right",
+        status: "error",
+        isClosable: true,
+      });
+    }
+  };
 
   const navigate = useNavigate();
   return (
@@ -49,28 +92,33 @@ export const History = () => {
         History List{" "}
       </Text>
       <Box className="flex lg:px-10 justify-between">
-        <Button
-          onClick={() => navigate("/")}
-          border="1px"
-          borderColor="#fcc05e"
-          className="flex items-center justify-center gap-2"
-        >
-          <ArrowLeftIcon color={"gray"} fontSize={"xs"} />
-          <Text className="text-gray-600">Back</Text>
-        </Button>
-        <InputGroup w="300px">
+        <InputGroup className="shadow-sm" w="300px">
           <InputLeftElement
             pointerEvents="none"
             children={<SearchIcon color="gray.500" />}
           />
           <Input focusBorderColor="#fcc05e" placeholder="Search By File name" />
         </InputGroup>
+        <Button
+          onClick={() => navigate("/upload")}
+          border="1px"
+		  backgroundColor={'#fcc05e'}
+          borderColor="#fcc05e"
+		  sx={{
+			_hover: {
+				backgroundColor: '#ffd070'
+			}
+		  }}
+          className="flex items-center shadow-sm bg-green-400 hover:bg-green-600 justify-center gap-2"
+        >
+          <AddIcon color={'white'} />
+        </Button>
       </Box>
 
       <Box h="100vh" className="lg:px-10 pt-10 pb-10">
         <TableContainer
           borderColor="gray.200"
-          className="w-full border-[1px] rounded-xl "
+          className="w-full shadow-sm border-[1px] rounded-xl "
           overflowY="auto"
           maxH={"600px"}
           sx={{
@@ -80,21 +128,24 @@ export const History = () => {
             scrollbarWidth: "none",
           }}
         >
-          <Table>
+          <Table >
             <Thead className=" bg-gray-300 h-[30px] sticky top-0 z-10">
               <Tr sx={{ th: { fontSize: "15px" } }} h={"50px"}>
                 <Th>Original File</Th>
+                <Th>Size</Th>
                 <Th>Upload Date</Th>
-                <Th>Valid Version</Th>
-                <Th>InValid Version</Th>
+                <Th>Valid</Th>
+                <Th>InValid</Th>
+                <Th>Reason</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {historyData.map((item, index) => (
-                <Tr key={index}>
-                  <Td className="text-sm">{item.FileName}</Td>{" "}
+              {historyData.map((item) => (
+                <Tr key={item.id}>
+                  <Td className="text-sm">{item.file_name}</Td>{" "}
+				  <Td className="text-sm">{item.size}</Td>
                   <Td className="text-sm">
-                    {new Date(item.createdAt)
+                    {new Date(item.uploaded_at)
                       .toLocaleString("en-GB", {
                         year: "numeric",
                         month: "2-digit",
@@ -107,18 +158,35 @@ export const History = () => {
                       .replace(",", "")
                       .replace(" ", ":")}
                   </Td>
-                  <Td>
+				  {
+					item.raison === null ?
+					<>
+
+					<Td>
                     <DownloadIcon
-                      color={"#fcc05e"}
-                      className="font-bold cursor-pointer flex items-center gap-1 text-[#fcc05e] hover:text-[#d1a400] hover:underline transition duration-200"
+                      onClick={() =>
+                        downloadFile(item.id, "Valid-" + item.file_name, "valid")
+						}
+                      color={"green.400"}
+                      className="font-bold cursor-pointer flex items-center gap-1 hover:text-green-700 hover:underline transition duration-200"
                     />
                   </Td>
                   <Td>
                     <DownloadIcon
+                      onClick={() =>
+                        downloadFile(item.id, "Invalid-" + item.file_name, "invalid")
+                      }
                       color={"red.600"}
                       className="font-bold cursor-pointer flex items-center gap-1 text-red-600 hover:text-red-500 hover:underline transition duration-200"
-                    />
+					  />
                   </Td>
+					  </> : <>
+						<Td></Td>
+						<Td></Td>
+					  </>
+                  
+				  }
+				  <Td className="text-sm">{item.raison}</Td>
                 </Tr>
               ))}
             </Tbody>
