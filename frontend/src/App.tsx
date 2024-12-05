@@ -1,9 +1,4 @@
-import React, {
-  createContext,
-  Dispatch,
-  SetStateAction,
-  useState,
-} from "react";
+import { createContext, Dispatch, SetStateAction, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { History } from "./components/History";
 import { Upload } from "./components/Upload";

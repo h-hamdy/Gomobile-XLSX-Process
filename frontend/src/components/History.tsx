@@ -15,12 +15,13 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftIcon, SearchIcon, DownloadIcon , AddIcon} from "@chakra-ui/icons";
+import { SearchIcon, DownloadIcon , AddIcon} from "@chakra-ui/icons";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
 export const History = () => {
   const [historyData, setHistoryData] = useState<any[]>([]);
+  const [Searchvalue, SetsearchValue] = useState([]);
   const toast = useToast();
 
   const historyList = async () => {
@@ -85,6 +86,23 @@ export const History = () => {
     }
   };
 
+  const handlechange = async (e: any) => {
+	  SetsearchValue(e.target.value);
+	  try {
+		  const response = await axios.get(`http://localhost:5000/get_file_by_file_name?file_name=${Searchvalue}`);
+		//   console.log("request send");
+		console.log(response.data)
+		  setHistoryData(response.data);
+	  }
+	  catch(error : any) {
+		console.log(error.message)
+	  }
+  }
+
+  useEffect(() => {
+	console.log(Searchvalue);
+  }, [Searchvalue])
+
   const navigate = useNavigate();
   return (
     <Box className="flex flex-col gap-10 p-10 h-[100vh] ">
@@ -97,7 +115,7 @@ export const History = () => {
             pointerEvents="none"
             children={<SearchIcon color="gray.500" />}
           />
-          <Input focusBorderColor="#fcc05e" placeholder="Search By File name" />
+          <Input onChange={handlechange} focusBorderColor="#fcc05e" placeholder="Search By File name" />
         </InputGroup>
         <Button
           onClick={() => navigate("/upload")}
